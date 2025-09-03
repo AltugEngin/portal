@@ -1,24 +1,14 @@
-import React from 'react'
-import { supabase } from '../supabaseClient'
-import { useQuery } from '@tanstack/react-query'
-
-export interface Post{
-    id:number,
-    created_at:string,
-    title:string,
-    supplier:string
-}
-
- const fetchPosts=async():Promise<Post[]>=>{
-        const {data,error}=await supabase.from("posts").select("*")
-        if(error) throw new Error(error.message)
-        return data as Post[]
-    }
+import useTableData from "./useTableData";
+import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { type Item } from "./useTableData";
 
 export default function Table() {
-const {data,error,isLoading}=useQuery({queryKey:["posts"],queryFn:fetchPosts})
-   
-  return (
-    <div>{data?.map((item)=><div>{item.title} {"  "} {item.supplier}</div>)}</div>
-  )
+  const { columns, data } = useTableData();
+  const table = useReactTable<Item>({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+  console.log(table.getHeaderGroups());
+  return <div></div>;
 }
