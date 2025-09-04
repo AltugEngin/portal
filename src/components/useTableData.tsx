@@ -30,7 +30,9 @@ export default function useTableData() {
   const [data, setData] = useState<Item[]>(Items);
 
   const columns = useMemo(
-    () => [columnHelper.accessor("title", { id: "title", header: "Title" })],
+    () => [columnHelper.accessor("title", { id: "title", header: "Title" }),
+      columnHelper.accessor("supplier",{id:"supplier",header:"Supplier"})
+    ],
     []
   );
 
