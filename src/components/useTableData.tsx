@@ -21,13 +21,14 @@ const fetchPosts = async (): Promise<Item[]> => {
 export default function useTableData() {
   const {
     data: Items,
-    error,
-    isLoading,
+    
+    
   } = useQuery({
     queryKey: ["posts"],
     queryFn: fetchPosts,
   });
-  const [data, setData] = useState<Item[]>(Items);
+  //@ts-expect-error Items type not OK
+  const [data] = useState<Item[]>(Items);
 
   const columns = useMemo(
     () => [
