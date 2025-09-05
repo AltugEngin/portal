@@ -1,14 +1,12 @@
-import * as React from "react";
-import useTableData from "./useTableData";
-import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
-import { type Item } from "./useTableData";
-import Box from "@mui/material/Box";
-import Tooltip from "@mui/material/Tooltip";
-import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/DeleteOutlined";
-import SaveIcon from "@mui/icons-material/Save";
-import CancelIcon from "@mui/icons-material/Close";
+import * as React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import Box from '@mui/material/Box';
+import Tooltip from '@mui/material/Tooltip';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Close';
 import {
   type GridRowsProp,
   type GridRowModesModel,
@@ -23,21 +21,39 @@ import {
   type GridSlotProps,
   Toolbar,
   ToolbarButton,
-} from "@mui/x-data-grid";
+} from '@mui/x-data-grid';
 import {
   randomCreatedDate,
   randomTraderName,
   randomId,
   randomArrayItem,
-} from "@mui/x-data-grid-generator";
+} from '@mui/x-data-grid-generator';
+import { supabase } from '../supabaseClient';
 
-const roles = ["Market", "Finance", "Development"];
+export type Item = {
+  id: number;
+  created_at: string;
+  title: string;
+  supplier: string;
+};
+
+const fetchPosts = async (): Promise<Item[]> => {
+  const { data, error } = await supabase.from("posts").select("*");
+  if (error) throw new Error(error.message);
+  return data as Item[];
+};
+
+const deletePost=async(id):Promise<Item[]>=>{
+    const { data, error } = await supabase.from('posts').delete().eq('id', id).select()
+    return data as Item[]
+}
+
+const roles = ['Market', 'Finance', 'Development'];
 const randomRole = () => {
   return randomArrayItem(roles);
 };
 
 /*
-
 const initialRows: GridRowsProp = [
   {
     id: randomId(),
@@ -78,27 +94,27 @@ const initialRows: GridRowsProp = [
 
 */
 
-declare module "@mui/x-data-grid" {
+declare module '@mui/x-data-grid' {
   interface ToolbarPropsOverrides {
     setRows: (newRows: (oldRows: GridRowsProp) => GridRowsProp) => void;
     setRowModesModel: (
-      newModel: (oldModel: GridRowModesModel) => GridRowModesModel
+      newModel: (oldModel: GridRowModesModel) => GridRowModesModel,
     ) => void;
   }
 }
 
-function EditToolbar(props: GridSlotProps["toolbar"]) {
+function EditToolbar(props: GridSlotProps['toolbar']) {
   const { setRows, setRowModesModel } = props;
 
   const handleClick = () => {
     const id = randomId();
     setRows((oldRows) => [
       ...oldRows,
-      { id, name: "", age: "", role: "", isNew: true },
+      { id, name: '', age: '', role: '', isNew: true },
     ]);
     setRowModesModel((oldModel) => ({
       ...oldModel,
-      [id]: { mode: GridRowModes.Edit, fieldToFocus: "name" },
+      [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
     }));
   };
 
@@ -113,22 +129,17 @@ function EditToolbar(props: GridSlotProps["toolbar"]) {
   );
 }
 
-export default function FullFeaturedCrudGrid() {
-  const { columns, data } = useTableData();
-  const table = useReactTable<Item>({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
+export default function TableMUI() 
+{
+    const {data} = useQuery({
+    queryKey: ["posts"],
+    queryFn: fetchPosts,
   });
+  
   const [rows, setRows] = React.useState(data);
-  const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
-    {}
-  );
+  const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>({});
 
-  const handleRowEditStop: GridEventListener<"rowEditStop"> = (
-    params,
-    event
-  ) => {
+  const handleRowEditStop: GridEventListener<'rowEditStop'> = (params, event) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
       event.defaultMuiPrevented = true;
     }
@@ -136,6 +147,7 @@ export default function FullFeaturedCrudGrid() {
 
   const handleEditClick = (id: GridRowId) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+    
   };
 
   const handleSaveClick = (id: GridRowId) => () => {
@@ -143,7 +155,9 @@ export default function FullFeaturedCrudGrid() {
   };
 
   const handleDeleteClick = (id: GridRowId) => () => {
-    setRows(rows.filter((row) => row.id !== id));
+    //setRows(rows.filter((row) => row.id !== id));
+    deletePost(id)
+
   };
 
   const handleCancelClick = (id: GridRowId) => () => {
@@ -167,40 +181,39 @@ export default function FullFeaturedCrudGrid() {
   const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
     setRowModesModel(newRowModesModel);
   };
-
 /*
-  const kolon: GridColDef[] = [
-    { field: "title", headerName: "title", width: 180, editable: true },
+  const columns: GridColDef[] = [
+    { field: 'name', headerName: 'Name', width: 180, editable: true },
     {
-      field: "age",
-      headerName: "Age",
-      type: "number",
+      field: 'age',
+      headerName: 'Age',
+      type: 'number',
       width: 80,
-      align: "left",
-      headerAlign: "left",
+      align: 'left',
+      headerAlign: 'left',
       editable: true,
     },
     {
-      field: "joinDate",
-      headerName: "Join date",
-      type: "date",
+      field: 'joinDate',
+      headerName: 'Join date',
+      type: 'date',
       width: 180,
       editable: true,
     },
     {
-      field: "role",
-      headerName: "Department",
+      field: 'role',
+      headerName: 'Department',
       width: 220,
       editable: true,
-      type: "singleSelect",
-      valueOptions: ["Market", "Finance", "Development"],
+      type: 'singleSelect',
+      valueOptions: ['Market', 'Finance', 'Development'],
     },
     {
-      field: "actions",
-      type: "actions",
-      headerName: "Actions",
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Actions',
       width: 100,
-      cellClassName: "actions",
+      cellClassName: 'actions',
       getActions: ({ id }) => {
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
@@ -211,7 +224,7 @@ export default function FullFeaturedCrudGrid() {
               label="Save"
               material={{
                 sx: {
-                  color: "primary.main",
+                  color: 'primary.main',
                 },
               }}
               onClick={handleSaveClick(id)}
@@ -246,36 +259,17 @@ export default function FullFeaturedCrudGrid() {
   ];
 */
 
-
-const kolon: GridColDef[] = [
-    { field: "title", headerName: "title", width: 180, editable: true },
+const columns:GridColDef[]=[
+    { field: 'title', headerName: 'title', width: 180, editable: true },
+    { field: 'supplier', headerName: 'supplier', width: 180, editable: true },
+    { field: 'created_at', headerName: 'created_at', width: 180, editable: true },
+    { field: 'id', headerName: 'id', width: 180, editable: true },
     {
-      field: "supplier",
-      headerName: "supplier",
-      width: 180,
-      align: "left",
-      editable: true,
-    },
-    {
-      field: "id",
-      headerName: "id",
-      width: 180,
-      editable: false,
-    },
-    {
-      field: "role",
-      headerName: "Department",
-      width: 220,
-      editable: true,
-      type: "singleSelect",
-      valueOptions: ["Market", "Finance", "Development"],
-    },
-    {
-      field: "actions",
-      type: "actions",
-      headerName: "Actions",
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Actions',
       width: 100,
-      cellClassName: "actions",
+      cellClassName: 'actions',
       getActions: ({ id }) => {
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
@@ -286,7 +280,7 @@ const kolon: GridColDef[] = [
               label="Save"
               material={{
                 sx: {
-                  color: "primary.main",
+                  color: 'primary.main',
                 },
               }}
               onClick={handleSaveClick(id)}
@@ -318,23 +312,23 @@ const kolon: GridColDef[] = [
         ];
       },
     },
-  ];
+]
   return (
     <Box
       sx={{
         height: 500,
-        width: "100%",
-        "& .actions": {
-          color: "text.secondary",
+        width: '100%',
+        '& .actions': {
+          color: 'text.secondary',
         },
-        "& .textPrimary": {
-          color: "text.primary",
+        '& .textPrimary': {
+          color: 'text.primary',
         },
       }}
     >
       <DataGrid
         rows={rows}
-        columns={kolon}
+        columns={columns}
         editMode="row"
         rowModesModel={rowModesModel}
         onRowModesModelChange={handleRowModesModelChange}

@@ -2,6 +2,7 @@
 import { useAuth } from "../context/AuthContext";
 import Table from "../components/Table";
 import { Divider } from "@mui/material";
+import TableMUI from "../components/TableMUI";
 
 export default function Dashboard() {
   const { signOut, user } = useAuth();
@@ -11,7 +12,7 @@ export default function Dashboard() {
       <h1>Dashboard</h1>
       <button onClick={signOut}>Çıkış</button>
       <Divider></Divider>
-      <Table></Table>
+      <TableMUI></TableMUI>
     </div>
   );
 }
