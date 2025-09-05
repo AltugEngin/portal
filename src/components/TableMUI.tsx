@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import Box from '@mui/material/Box';
 import Tooltip from '@mui/material/Tooltip';
 import AddIcon from '@mui/icons-material/Add';
@@ -130,15 +130,18 @@ function EditToolbar(props: GridSlotProps['toolbar']) {
 }
 
 export default function TableMUI() 
-{
+    {const [intervalMs, setIntervalMs] = React.useState(1000)
+    const queryClient = useQueryClient();
     const {data} = useQuery({
     queryKey: ["posts"],
     queryFn: fetchPosts,
+    refetchInterval:intervalMs
   });
   
   const [rows, setRows] = React.useState(data);
+  
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>({});
-
+  console.log(rows)
   const handleRowEditStop: GridEventListener<'rowEditStop'> = (params, event) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
       event.defaultMuiPrevented = true;
@@ -154,9 +157,24 @@ export default function TableMUI()
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
   };
 
+
+const { mutate } = useMutation({
+    mutationFn: async(id) => {
+      const { data, error } = await supabase.from('posts').delete().eq('id', id).select()
+      
+    setRows(data)
+    //return data as Item[]
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"],data });
+    },
+  });
   const handleDeleteClick = (id: GridRowId) => () => {
     //setRows(rows.filter((row) => row.id !== id));
     deletePost(id)
+
+
 
   };
 
@@ -306,7 +324,8 @@ const columns:GridColDef[]=[
           <GridActionsCellItem
             icon={<DeleteIcon />}
             label="Delete"
-            onClick={handleDeleteClick(id)}
+            //onClick={handleDeleteClick(id)}
+            onClick={()=>mutate(id)}
             color="inherit"
           />,
         ];
