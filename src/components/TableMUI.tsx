@@ -1,12 +1,12 @@
-import * as React from 'react';
-import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
-import Box from '@mui/material/Box';
-import Tooltip from '@mui/material/Tooltip';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/DeleteOutlined';
-import SaveIcon from '@mui/icons-material/Save';
-import CancelIcon from '@mui/icons-material/Close';
+import * as React from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Box from "@mui/material/Box";
+import Tooltip from "@mui/material/Tooltip";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/DeleteOutlined";
+import SaveIcon from "@mui/icons-material/Save";
+import CancelIcon from "@mui/icons-material/Close";
 import {
   type GridRowsProp,
   type GridRowModesModel,
@@ -21,14 +21,14 @@ import {
   type GridSlotProps,
   Toolbar,
   ToolbarButton,
-} from '@mui/x-data-grid';
+} from "@mui/x-data-grid";
 import {
   randomCreatedDate,
   randomTraderName,
   randomId,
   randomArrayItem,
-} from '@mui/x-data-grid-generator';
-import { supabase } from '../supabaseClient';
+} from "@mui/x-data-grid-generator";
+import { supabase } from "../supabaseClient";
 
 export type Item = {
   id: number;
@@ -43,12 +43,16 @@ const fetchPosts = async (): Promise<Item[]> => {
   return data as Item[];
 };
 
-const deletePost=async(id):Promise<Item[]>=>{
-    const { data, error } = await supabase.from('posts').delete().eq('id', id).select()
-    return data as Item[]
-}
+const deletePost = async (id): Promise<Item[]> => {
+  const { data, error } = await supabase
+    .from("posts")
+    .delete()
+    .eq("id", id)
+    .select();
+  return data as Item[];
+};
 
-const roles = ['Market', 'Finance', 'Development'];
+const roles = ["Market", "Finance", "Development"];
 const randomRole = () => {
   return randomArrayItem(roles);
 };
@@ -94,27 +98,27 @@ const initialRows: GridRowsProp = [
 
 */
 
-declare module '@mui/x-data-grid' {
+declare module "@mui/x-data-grid" {
   interface ToolbarPropsOverrides {
     setRows: (newRows: (oldRows: GridRowsProp) => GridRowsProp) => void;
     setRowModesModel: (
-      newModel: (oldModel: GridRowModesModel) => GridRowModesModel,
+      newModel: (oldModel: GridRowModesModel) => GridRowModesModel
     ) => void;
   }
 }
 
-function EditToolbar(props: GridSlotProps['toolbar']) {
+function EditToolbar(props: GridSlotProps["toolbar"]) {
   const { setRows, setRowModesModel } = props;
 
   const handleClick = () => {
     const id = randomId();
     setRows((oldRows) => [
       ...oldRows,
-      { id, name: '', age: '', role: '', isNew: true },
+      { id, name: "", age: "", role: "", isNew: true },
     ]);
     setRowModesModel((oldModel) => ({
       ...oldModel,
-      [id]: { mode: GridRowModes.Edit, fieldToFocus: 'name' },
+      [id]: { mode: GridRowModes.Edit, fieldToFocus: "name" },
     }));
   };
 
@@ -129,20 +133,25 @@ function EditToolbar(props: GridSlotProps['toolbar']) {
   );
 }
 
-export default function TableMUI() 
-    {const [intervalMs, setIntervalMs] = React.useState(1000)
-    const queryClient = useQueryClient();
-    const {data} = useQuery({
+export default function TableMUI() {
+  const queryClient = useQueryClient();
+  const { data } = useQuery({
     queryKey: ["posts"],
     queryFn: fetchPosts,
-    refetchInterval:intervalMs
   });
-  
   const [rows, setRows] = React.useState(data);
-  
-  const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>({});
-  console.log(rows)
-  const handleRowEditStop: GridEventListener<'rowEditStop'> = (params, event) => {
+  React.useEffect(() => {
+    setRows(data);
+  }, [data]);
+
+  const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
+    {}
+  );
+  //console.log(rows);
+  const handleRowEditStop: GridEventListener<"rowEditStop"> = (
+    params,
+    event
+  ) => {
     if (params.reason === GridRowEditStopReasons.rowFocusOut) {
       event.defaultMuiPrevented = true;
     }
@@ -150,32 +159,31 @@ export default function TableMUI()
 
   const handleEditClick = (id: GridRowId) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
-    
   };
 
   const handleSaveClick = (id: GridRowId) => () => {
     setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
   };
 
+  const { mutate } = useMutation({
+    mutationFn: async (id) => {
+      const { data, error } = await supabase
+        .from("posts")
+        .delete()
+        .eq("id", id)
+        .select();
 
-const { mutate } = useMutation({
-    mutationFn: async(id) => {
-      const { data, error } = await supabase.from('posts').delete().eq('id', id).select()
-      
-    setRows(data)
-    //return data as Item[]
+      return data as Item[];
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"],data });
+      queryClient.invalidateQueries({ queryKey: ["posts"], data });
     },
   });
+
   const handleDeleteClick = (id: GridRowId) => () => {
     //setRows(rows.filter((row) => row.id !== id));
-    deletePost(id)
-
-
-
+    deletePost(id);
   };
 
   const handleCancelClick = (id: GridRowId) => () => {
@@ -199,7 +207,7 @@ const { mutate } = useMutation({
   const handleRowModesModelChange = (newRowModesModel: GridRowModesModel) => {
     setRowModesModel(newRowModesModel);
   };
-/*
+  /*
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Name', width: 180, editable: true },
     {
@@ -277,17 +285,22 @@ const { mutate } = useMutation({
   ];
 */
 
-const columns:GridColDef[]=[
-    { field: 'title', headerName: 'title', width: 180, editable: true },
-    { field: 'supplier', headerName: 'supplier', width: 180, editable: true },
-    { field: 'created_at', headerName: 'created_at', width: 180, editable: true },
-    { field: 'id', headerName: 'id', width: 180, editable: true },
+  const columns: GridColDef[] = [
+    { field: "title", headerName: "title", width: 180, editable: true },
+    { field: "supplier", headerName: "supplier", width: 180, editable: true },
     {
-      field: 'actions',
-      type: 'actions',
-      headerName: 'Actions',
+      field: "created_at",
+      headerName: "created_at",
+      width: 180,
+      editable: true,
+    },
+    { field: "id", headerName: "id", width: 180, editable: true },
+    {
+      field: "actions",
+      type: "actions",
+      headerName: "Actions",
       width: 100,
-      cellClassName: 'actions',
+      cellClassName: "actions",
       getActions: ({ id }) => {
         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
 
@@ -298,7 +311,7 @@ const columns:GridColDef[]=[
               label="Save"
               material={{
                 sx: {
-                  color: 'primary.main',
+                  color: "primary.main",
                 },
               }}
               onClick={handleSaveClick(id)}
@@ -325,23 +338,23 @@ const columns:GridColDef[]=[
             icon={<DeleteIcon />}
             label="Delete"
             //onClick={handleDeleteClick(id)}
-            onClick={()=>mutate(id)}
+            onClick={() => mutate(id)}
             color="inherit"
           />,
         ];
       },
     },
-]
+  ];
   return (
     <Box
       sx={{
         height: 500,
-        width: '100%',
-        '& .actions': {
-          color: 'text.secondary',
+        width: "100%",
+        "& .actions": {
+          color: "text.secondary",
         },
-        '& .textPrimary': {
-          color: 'text.primary',
+        "& .textPrimary": {
+          color: "text.primary",
         },
       }}
     >
